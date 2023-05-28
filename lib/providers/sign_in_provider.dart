@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignInProvider extends ChangeNotifier {
-  // instance of firebaseauth, facebook and google
+  // instance of firebaseauth, facebook, google and github
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final FacebookAuth facebookAuth = FacebookAuth.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -68,13 +68,13 @@ class SignInProvider extends ChangeNotifier {
   // sign in with google
   Future signInWithGoogle() async {
     final GoogleSignInAccount? googleSignInAccount =
-        await googleSignIn.signIn();
+    await googleSignIn.signIn();
 
     if (googleSignInAccount != null) {
       // executing our authentication
       try {
         final GoogleSignInAuthentication googleSignInAuthentication =
-            await googleSignInAccount.authentication;
+        await googleSignInAccount.authentication;
         final AuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleSignInAuthentication.accessToken,
           idToken: googleSignInAuthentication.idToken,
@@ -82,7 +82,7 @@ class SignInProvider extends ChangeNotifier {
 
         // signing to firebase user instance
         final User userDetails =
-            (await firebaseAuth.signInWithCredential(credential)).user!;
+        (await firebaseAuth.signInWithCredential(credential)).user!;
 
         // now save all values
         _name = userDetails.displayName;
@@ -95,7 +95,7 @@ class SignInProvider extends ChangeNotifier {
         switch (e.code) {
           case "account-exists-with-different-credential":
             _errorCode =
-                "You already have an account with us. Use correct provider";
+            "You already have an account with us. Use correct provider";
             _hasError = true;
             notifyListeners();
             break;
@@ -123,7 +123,7 @@ class SignInProvider extends ChangeNotifier {
       final FirebaseAuth auth = FirebaseAuth.instance;
       final OAuthProvider provider = OAuthProvider('github.com');
       final UserCredential userCredential =
-          await auth.signInWithPopup(provider);
+      await auth.signInWithPopup(provider);
 
       // Get the user details
       final User? user = userCredential.user;
@@ -141,7 +141,7 @@ class SignInProvider extends ChangeNotifier {
       switch (e.code) {
         case "account-exists-with-different-credential":
           _errorCode =
-              "You already have an account with us. Use correct provider";
+          "You already have an account with us. Use correct provider";
           _hasError = true;
           break;
         case "null":
@@ -173,14 +173,15 @@ class SignInProvider extends ChangeNotifier {
     final LoginResult result = await facebookAuth.login();
     // getting the profile
     final graphResponse = await http.get(Uri.parse(
-        'https://graph.facebook.com/v2.12/me?fields=name,picture.width(800).height(800),first_name,last_name,email&access_token=${result.accessToken!.token}'));
+        'https://graph.facebook.com/v2.12/me?fields=name,picture.width(800).height(800),first_name,last_name,email&access_token=${result
+            .accessToken!.token}'));
 
     final profile = jsonDecode(graphResponse.body);
 
     if (result.status == LoginStatus.success) {
       try {
         final OAuthCredential credential =
-            FacebookAuthProvider.credential(result.accessToken!.token);
+        FacebookAuthProvider.credential(result.accessToken!.token);
         await firebaseAuth.signInWithCredential(credential);
         // saving the values
         _name = profile['name'];
@@ -194,7 +195,7 @@ class SignInProvider extends ChangeNotifier {
         switch (e.code) {
           case "account-exists-with-different-credential":
             _errorCode =
-                "You already have an account with us. Use correct provider";
+            "You already have an account with us. Use correct provider";
             _hasError = true;
             notifyListeners();
             break;
@@ -222,18 +223,19 @@ class SignInProvider extends ChangeNotifier {
         .collection("users")
         .doc(uid)
         .get()
-        .then((DocumentSnapshot snapshot) => {
-              _uid = snapshot['uid'],
-              _name = snapshot['name'],
-              _email = snapshot['email'],
-              _imageUrl = snapshot['image_url'],
-              _provider = snapshot['provider'],
-            });
+        .then((DocumentSnapshot snapshot) =>
+    {
+      _uid = snapshot['uid'],
+      _name = snapshot['name'],
+      _email = snapshot['email'],
+      _imageUrl = snapshot['image_url'],
+      _provider = snapshot['provider'],
+    });
   }
 
   Future saveDataToFirestore() async {
     final DocumentReference r =
-        FirebaseFirestore.instance.collection("users").doc(uid);
+    FirebaseFirestore.instance.collection("users").doc(uid);
     await r.set({
       "name": _name,
       "email": _email,
@@ -267,7 +269,7 @@ class SignInProvider extends ChangeNotifier {
   // checkUser exists or not in cloudfirestore
   Future<bool> checkUserExists() async {
     DocumentSnapshot snap =
-        await FirebaseFirestore.instance.collection('users').doc(_uid).get();
+    await FirebaseFirestore.instance.collection('users').doc(_uid).get();
     if (snap.exists) {
       print("EXISTING USER");
       return true;
@@ -279,9 +281,8 @@ class SignInProvider extends ChangeNotifier {
 
   // signout
   Future userSignOut() async {
-    await firebaseAuth.signOut;
+    firebaseAuth.signOut;
     await googleSignIn.signOut();
-    await facebookAuth.logOut();
 
     _isSignedIn = false;
     notifyListeners();
@@ -298,7 +299,7 @@ class SignInProvider extends ChangeNotifier {
     _name = name;
     _email = email;
     _imageUrl =
-        "https://winaero.com/blog/wp-content/uploads/2017/12/User-icon-256-blue.png";
+    "https://winaero.com/blog/wp-content/uploads/2017/12/User-icon-256-blue.png";
     _uid = user.phoneNumber;
     _provider = "PHONE";
     notifyListeners();

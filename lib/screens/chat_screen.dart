@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../models/message_model.dart';
@@ -13,9 +14,72 @@ class ChatScreen extends StatefulWidget {
 }
 
 class ChatScreenState extends State<ChatScreen> {
+  TextEditingController _messageController = TextEditingController();
+
+  void sendMessage() async {
+    final String text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    final Message newMessage = Message(
+      sender: currentUser,
+      receiver: widget.user,
+      text: text,
+      time: DateTime.now().toString(),
+      isLiked: false,
+      unread: true,
+    );
+
+    // Store the message in Cloud Firestore
+    await FirebaseFirestore.instance.collection('messages').add({
+      'text': newMessage.text,
+      'time': newMessage.time,
+      'isLiked': newMessage.isLiked,
+      'senderId': newMessage.sender.id,
+      'receiverId': newMessage.receiver.id,
+      'participants': [newMessage.sender.id, newMessage.receiver.id],
+    });
+
+    setState(() {
+      messages.insert(0, newMessage);
+    });
+
+    _messageController.clear();
+  }
+
+  _buildMessageComposer() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      height: 70.0,
+      color: Colors.white,
+      child: Row(
+        children: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.photo),
+            iconSize: 25.0,
+            onPressed: () {},
+          ),
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (value) {},
+              decoration: const InputDecoration.collapsed(
+                hintText: 'Send a message...',
+                fillColor: Colors.black,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.send),
+            iconSize: 25.0,
+            onPressed: sendMessage,
+          ),
+        ],
+      ),
+    );
+  }
+
   _buildMessage(Message message, bool isMe) {
-    final Size screenSize = MediaQuery.of(context).size;
-    final double paddingValue = screenSize.width * 0.2;
     final Container msg = Container(
       margin: isMe
           ? const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 80.0)
@@ -26,7 +90,7 @@ class ChatScreenState extends State<ChatScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 15.0),
       width: MediaQuery.of(context).size.width * 0.75,
       decoration: BoxDecoration(
-        color: isMe ? Theme.of(context).hintColor : Color(0xFFFFEFEE),
+        color: isMe ? Theme.of(context).hintColor : const Color(0xFFFFEFEE),
         borderRadius: isMe
             ? const BorderRadius.only(
                 topLeft: Radius.circular(15.0),
@@ -82,36 +146,61 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  _buildMessageComposer() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      height: 70.0,
-      color: Colors.white,
-      child: Row(
-        children: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.photo),
-            iconSize: 25.0,
-            onPressed: () {},
-          ),
-          Expanded(
-            child: TextField(
-              textCapitalization: TextCapitalization.sentences,
-              onChanged: (value) {},
-              decoration: const InputDecoration.collapsed(
-                hintText: 'Send a message...',
-                fillColor: Colors.black,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.send),
-            iconSize: 25.0,
-            onPressed: () {},
-          ),
-        ],
-      ),
-    );
+  List<Message> messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchMessages();
+  }
+
+  Future<void> fetchMessages() async {
+    final QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('messages')
+        .where('participants', arrayContains: widget.user.id)
+        .orderBy('time')
+        .get();
+
+    final List<Message> fetchedMessages = [];
+
+    for (final doc in snapshot.docs) {
+      final Map<String, dynamic> messageData =
+          doc.data() as Map<String, dynamic>;
+      final String text = messageData['text'] as String;
+      final String time = messageData['time'] as String;
+      final bool isLiked = messageData['isLiked'] as bool;
+      final String senderId = messageData['senderId'] as String;
+      final String receiverId = messageData['receiverId'] as String;
+
+      final User sender = User(
+        id: senderId,
+        name: 'Sender', // Replace with appropriate field from Firestore
+        imageUrl:
+            'sender_image_url', // Replace with appropriate field from Firestore
+      );
+
+      final User receiver = User(
+        id: receiverId,
+        name: 'Receiver', // Replace with appropriate field from Firestore
+        imageUrl:
+            'receiver_image_url', // Replace with appropriate field from Firestore
+      );
+
+      final Message message = Message(
+        sender: sender,
+        receiver: receiver,
+        text: text,
+        time: time,
+        isLiked: isLiked,
+        unread: true,
+      );
+
+      fetchedMessages.add(message);
+    }
+
+    setState(() {
+      messages = fetchedMessages;
+    });
   }
 
   @override
