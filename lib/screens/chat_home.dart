@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/sign_in_provider.dart';
+import '../utils/next_screen.dart';
 import '../widgets/favourite_contacts.dart';
 import '../widgets/recent_chat_list.dart';
+import 'login_screen.dart';
 
 class ChatHome extends StatefulWidget {
   ChatHome({Key? key}) : super(key: key);
@@ -84,6 +86,15 @@ class _ChatHomeState extends State<ChatHome> {
               title: const Text('Item 1'),
               onTap: () => Navigator.pop(context),
             ),
+            ElevatedButton(
+                onPressed: () {
+                  sp.userSignOut();
+                  nextScreenReplace(context, const LoginScreen());
+                },
+                child: const Text("SIGNOUT",
+                    style: TextStyle(
+                      color: Colors.white,
+                    )))
           ],
         ),
       ),
