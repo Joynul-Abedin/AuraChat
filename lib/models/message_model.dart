@@ -2,16 +2,17 @@ import 'package:chat_app/models/user_model.dart';
 
 class Message {
   final User sender;
-  final String
-  time; // Would usually be type DateTime or Firebase Timestamp in production apps
+  final User receiver;
   final String text;
+  final String time;
   final bool isLiked;
   final bool unread;
 
   Message({
     required this.sender,
-    required this.time,
+    required this.receiver,
     required this.text,
+    required this.time,
     required this.isLiked,
     required this.unread,
   });
@@ -19,79 +20,79 @@ class Message {
 
 // YOU - current user
 final User currentUser = User(
-  id: 0,
+  id: "0",
   name: 'Current User',
   imageUrl: 'assets/images/greg.jpg',
 );
 
 // USERS
 final User dolan = User(
-  id: 1,
+  id: "1",
   name: 'Dolan',
   imageUrl: 'assets/images/sophia.jpg',
 );
 final User shokal = User(
-  id: 2,
+  id: "2",
   name: 'Shokal',
   imageUrl: 'assets/images/james.jpg',
 );
 final User raian = User(
-  id: 3,
+  id: "3",
   name: 'Raian',
   imageUrl: 'assets/images/john.jpg',
 );
 final User aqib = User(
-  id: 4,
+  id: "4",
   name: 'Aqib',
   imageUrl: 'assets/images/olivia.jpg',
 );
 final User sizan = User(
-  id: 5,
+  id: "5",
   name: 'Sizan',
   imageUrl: 'assets/images/sam.jpg',
 );
 final User utchas = User(
-  id: 6,
+  id: "6",
   name: 'Utchas',
   imageUrl: 'assets/images/sophia.jpg',
 );
 final User saiful = User(
-  id: 7,
+  id: "7",
   name: 'Saiful',
   imageUrl: 'assets/images/steven.jpg',
 );
 final User greg = User(
-  id: 8,
+  id: "8",
   name: 'Greg',
   imageUrl: 'assets/images/greg.jpg',
 );
 final User james = User(
-  id: 9,
+  id: "9",
   name: 'James',
   imageUrl: 'assets/images/james.jpg',
 );
 final User john = User(
-  id: 10,
+  id: "10",
   name: 'John',
   imageUrl: 'assets/images/john.jpg',
 );
 final User olivia = User(
-  id: 11,
+  id: "11",
   name: 'Olivia',
   imageUrl: 'assets/images/olivia.jpg',
 );
 final User sam = User(
-  id: 12,
+  id: "12",
   name: 'Sam',
   imageUrl: 'assets/images/sam.jpg',
 );
 final User sophia = User(
-  id: 13,
+  id: "13",
   name: 'Sophia',
   imageUrl: 'assets/images/sophia.jpg',
 );
 final User steven = User(
-  id: 14,
+  id: "14",
   name: 'Steven',
   imageUrl: 'assets/images/steven.jpg',
 );
@@ -120,6 +121,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: shokal,
@@ -127,6 +129,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: raian,
@@ -134,6 +137,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: false,
+    receiver: shokal,
   ),
   Message(
     sender: aqib,
@@ -141,6 +145,8 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: true,
+    receiver: shokal,
+
   ),
   Message(
     sender: sizan,
@@ -148,6 +154,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: false,
+    receiver: shokal,
   ),
   Message(
     sender: utchas,
@@ -155,6 +162,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: false,
+    receiver: shokal,
   ),
   Message(
     sender: saiful,
@@ -162,6 +170,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: false,
+    receiver: shokal,
   ),
   Message(
     sender: james,
@@ -169,6 +178,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: olivia,
@@ -176,6 +186,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: john,
@@ -183,6 +194,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: false,
+    receiver: shokal,
   ),
   Message(
     sender: sophia,
@@ -190,6 +202,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: steven,
@@ -197,6 +210,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: false,
+    receiver: shokal,
   ),
   Message(
     sender: sam,
@@ -204,6 +218,7 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: false,
+    receiver: shokal,
   ),
   Message(
     sender: greg,
@@ -211,8 +226,8 @@ List<Message> chats = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: false,
     unread: false,
+    receiver: shokal,
   ),
-
 ];
 
 // EXAMPLE MESSAGES IN CHAT SCREEN
@@ -223,6 +238,7 @@ List<Message> messages = [
     text: 'Hey, how\'s it going? What did you do today?',
     isLiked: true,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: currentUser,
@@ -230,6 +246,7 @@ List<Message> messages = [
     text: 'Just walked my doge. She was super duper cute. The best pupper!!',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: james,
@@ -237,6 +254,7 @@ List<Message> messages = [
     text: 'How\'s the doggo?',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: james,
@@ -244,6 +262,7 @@ List<Message> messages = [
     text: 'All the food',
     isLiked: true,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: currentUser,
@@ -251,6 +270,7 @@ List<Message> messages = [
     text: 'Nice! What kind of food did you eat?',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
   Message(
     sender: james,
@@ -258,5 +278,6 @@ List<Message> messages = [
     text: 'I ate so much food today.',
     isLiked: false,
     unread: true,
+    receiver: shokal,
   ),
 ];

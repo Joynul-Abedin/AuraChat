@@ -47,8 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton.icon(
               onPressed: () {
                 PreferencesManager.instance.setBool(Utils().IS_LOGGED_IN, true);
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const ChatHome()));
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) => ChatHome()));
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red, // This is what you need!
@@ -68,8 +68,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => const ChatHome()));
+                      Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => ChatHome()));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red, // This is what you need!
@@ -79,8 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => const ChatHome()));
+                      Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => ChatHome()));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue, // This is what you need!
@@ -90,8 +90,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => const ChatHome()));
+                      Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => ChatHome()));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black, // This is what you need!

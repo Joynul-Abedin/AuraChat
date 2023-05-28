@@ -26,8 +26,6 @@ class _LoginScreenState extends State<LoginScreen> {
       RoundedLoadingButtonController();
   final RoundedLoadingButtonController facebookController =
       RoundedLoadingButtonController();
-  final RoundedLoadingButtonController twitterController =
-      RoundedLoadingButtonController();
   final RoundedLoadingButtonController phoneController =
       RoundedLoadingButtonController();
 
@@ -86,8 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   elevation: 0,
                   borderRadius: 25,
                   color: Colors.red,
-                  child: Wrap(
-                    children: const [
+                  child: const Wrap(
+                    children: [
                       Icon(
                         FontAwesomeIcons.google,
                         size: 20,
@@ -151,8 +149,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   elevation: 0,
                   borderRadius: 25,
                   color: Colors.amber,
-                  child: Wrap(
-                    children: const [
+                  child: const Wrap(
+                    children: [
                       Icon(
                         FontAwesomeIcons.phone,
                         size: 20,
@@ -301,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // handle after signin
   handleAfterSignIn() {
     Future.delayed(const Duration(milliseconds: 1000)).then((value) {
-      nextScreenReplace(context, const ChatHome());
+      nextScreenReplace(context, ChatHome());
     });
   }
 }

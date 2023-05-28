@@ -229,7 +229,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                           .then((value) =>
                                               sp.setSignIn().then((value) {
                                                 nextScreenReplace(
-                                                    context, const ChatHome());
+                                                    context, ChatHome());
                                               })));
                                 } else {
                                   // user does not exist
@@ -238,7 +238,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                                           (value) =>
                                               sp.setSignIn().then((value) {
                                                 nextScreenReplace(
-                                                    context, const ChatHome());
+                                                    context, ChatHome());
                                               })));
                                 }
                               });
