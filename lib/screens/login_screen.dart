@@ -1,192 +1,307 @@
+import 'package:chat_app/screens/chat_home.dart';
+import 'package:chat_app/screens/phone_auth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:rounded_loading_button/rounded_loading_button.dart';
 
-import '../widgets/button.dart';
-import '../widgets/text_field_style.dart';
-import 'chat_home.dart';
+import '../providers/internet_provider.dart';
+import '../providers/sign_in_provider.dart';
+import '../utils/Config.dart';
+import '../utils/next_screen.dart';
+import '../utils/snacbar.dart';
 
-class LoginPage extends StatelessWidget {
-  LoginPage({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
 
-  // text editing controllers
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final GlobalKey _scaffoldKey = GlobalKey<ScaffoldState>();
+  final RoundedLoadingButtonController googleController =
+      RoundedLoadingButtonController();
+  final RoundedLoadingButtonController githubController =
+      RoundedLoadingButtonController();
+  final RoundedLoadingButtonController facebookController =
+      RoundedLoadingButtonController();
+  final RoundedLoadingButtonController twitterController =
+      RoundedLoadingButtonController();
+  final RoundedLoadingButtonController phoneController =
+      RoundedLoadingButtonController();
 
   @override
   Widget build(BuildContext context) {
-    // sign user in method
-    void signUserIn() {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const ChatHome()));
-    }
-
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      key: _scaffoldKey,
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
+          child: Padding(
+        padding:
+            const EdgeInsets.only(left: 40, right: 40, top: 90, bottom: 30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image(
+                    image: AssetImage(Config.app_icon),
+                    height: 80,
+                    width: 80,
+                    fit: BoxFit.cover,
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  const Text("Welcome to FlutterFirebase",
+                      style:
+                          TextStyle(fontSize: 25, fontWeight: FontWeight.w500)),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Text(
+                    "Learn Authentication with Provider",
+                    style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+                  )
+                ],
+              ),
+            ),
+
+            // roundedbutton
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 50),
-
-                // logo
-                const Image(image: AssetImage("assets/images/icon.png")),
-
-                const SizedBox(height: 50),
-
-                // welcome back, you've been missed!
-                Text(
-                  'Welcome back you\'ve been missed!',
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontSize: 16,
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // username textfield
-                MyTextField(
-                  controller: usernameController,
-                  hintText: 'Username',
-                  obscureText: false,
-                ),
-
-                const SizedBox(height: 10),
-
-                // password textfield
-                MyTextField(
-                  controller: passwordController,
-                  hintText: 'Password',
-                  obscureText: true,
-                ),
-
-                const SizedBox(height: 10),
-
-                // forgot password?
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Forgot Password?',
-                        style: TextStyle(color: Colors.grey[600]),
+                RoundedLoadingButton(
+                  onPressed: () {
+                    handleGoogleSignIn();
+                  },
+                  controller: googleController,
+                  successColor: Colors.red,
+                  width: MediaQuery.of(context).size.width * 0.80,
+                  elevation: 0,
+                  borderRadius: 25,
+                  color: Colors.red,
+                  child: Wrap(
+                    children: const [
+                      Icon(
+                        FontAwesomeIcons.google,
+                        size: 20,
+                        color: Colors.white,
                       ),
+                      SizedBox(
+                        width: 15,
+                      ),
+                      Text("Sign in with Google",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 25),
-
-                // sign in button
-                MyButton(
-                  onTap: signUserIn,
+                const SizedBox(
+                  height: 10,
                 ),
-
-                const SizedBox(height: 50),
-
-                // or continue with
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
+                //github login
+                RoundedLoadingButton(
+                  onPressed: () {
+                    handleGitHubSignIn();
+                  },
+                  controller: githubController,
+                  successColor: Colors.red,
+                  width: MediaQuery.of(context).size.width * 0.80,
+                  elevation: 0,
+                  borderRadius: 25,
+                  color: Colors.black,
+                  child: const Wrap(
                     children: [
-                      Expanded(
-                        child: Divider(
-                          thickness: 0.5,
-                          color: Colors.grey[400],
-                        ),
+                      Icon(
+                        FontAwesomeIcons.github,
+                        size: 20,
+                        color: Colors.white,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Text(
-                          'Or continue with',
-                          style: TextStyle(color: Colors.grey[700]),
-                        ),
+                      SizedBox(
+                        width: 15,
                       ),
-                      Expanded(
-                        child: Divider(
-                          thickness: 0.5,
-                          color: Colors.grey[400],
-                        ),
-                      ),
+                      Text("Sign in with Github",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 50),
-
-                // google + apple sign in buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // google button
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        signUserIn();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red, // This is what you need!
-                      ),
-                      icon: const Icon(FontAwesomeIcons.google),
-                      label: const Text("Google"),
-                    ),
-                    const SizedBox(
-                      width: 10.0,
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        signUserIn();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue, // This is what you need!
-                      ),
-                      icon: const Icon(FontAwesomeIcons.facebook),
-                      label: const Text("Facebook"),
-                    ),
-                    const SizedBox(
-                      width: 10.0,
-                    ),
-
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        signUserIn();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black, // This is what you need!
-                      ),
-                      icon: const Icon(FontAwesomeIcons.github),
-                      label: const Text("Github"),
-                    ),
-                  ],
+                const SizedBox(
+                  height: 10,
                 ),
-
-                const SizedBox(height: 50),
-
-                // not a member? register now
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Not a member?',
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'Register now',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
+                // phoneAuth loading button
+                RoundedLoadingButton(
+                  onPressed: () {
+                    nextScreenReplace(context, const PhoneAuthScreen());
+                    phoneController.reset();
+                  },
+                  controller: phoneController,
+                  successColor: Colors.black,
+                  width: MediaQuery.of(context).size.width * 0.80,
+                  elevation: 0,
+                  borderRadius: 25,
+                  color: Colors.amber,
+                  child: Wrap(
+                    children: const [
+                      Icon(
+                        FontAwesomeIcons.phone,
+                        size: 20,
+                        color: Colors.white,
                       ),
-                    ),
-                  ],
-                )
+                      SizedBox(
+                        width: 15,
+                      ),
+                      Text("Sign in with Phone",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
               ],
-            ),
-          ),
+            )
+          ],
         ),
-      ),
+      )),
     );
+  }
+
+  // handling google sigin in
+  Future handleGoogleSignIn() async {
+    final sp = context.read<SignInProvider>();
+    final ip = context.read<InternetProvider>();
+    await ip.checkInternetConnection();
+
+    if (ip.hasInternet == false) {
+      openSnackbar(context, "Check your Internet connection", Colors.red);
+      googleController.reset();
+    } else {
+      await sp.signInWithGoogle().then((value) {
+        if (sp.hasError == true) {
+          openSnackbar(context, sp.errorCode.toString(), Colors.red);
+          googleController.reset();
+        } else {
+          // checking whether user exists or not
+          sp.checkUserExists().then((value) async {
+            if (value == true) {
+              // user exists
+              await sp.getUserDataFromFirestore(sp.uid).then((value) => sp
+                  .saveDataToSharedPreferences()
+                  .then((value) => sp.setSignIn().then((value) {
+                        googleController.success();
+                        handleAfterSignIn();
+                      })));
+            } else {
+              // user does not exist
+              sp.saveDataToFirestore().then((value) => sp
+                  .saveDataToSharedPreferences()
+                  .then((value) => sp.setSignIn().then((value) {
+                        googleController.success();
+                        handleAfterSignIn();
+                      })));
+            }
+          });
+        }
+      });
+    }
+  }
+
+  // handling github sign in
+  Future handleGitHubSignIn() async {
+    final sp = context.read<SignInProvider>();
+    final ip = context.read<InternetProvider>();
+    await ip.checkInternetConnection();
+
+    if (ip.hasInternet == false) {
+      openSnackbar(context, "Check your Internet connection", Colors.red);
+      githubController.reset();
+    } else {
+      await sp.signInWithGitHub().then((value) {
+        if (sp.hasError == true) {
+          openSnackbar(context, sp.errorCode.toString(), Colors.red);
+          githubController.reset();
+        } else {
+          // checking whether user exists or not
+          sp.checkUserExists().then((value) async {
+            if (value == true) {
+              // user exists
+              await sp.getUserDataFromFirestore(sp.uid).then((value) => sp
+                  .saveDataToSharedPreferences()
+                  .then((value) => sp.setSignIn().then((value) {
+                        githubController.success();
+                        handleAfterSignIn();
+                      })));
+            } else {
+              // user does not exist
+              sp.saveDataToFirestore().then((value) => sp
+                  .saveDataToSharedPreferences()
+                  .then((value) => sp.setSignIn().then((value) {
+                        githubController.success();
+                        handleAfterSignIn();
+                      })));
+            }
+          });
+        }
+      });
+    }
+  }
+
+  // handling facebookauth
+  // handling google sigin in
+  Future handleFacebookAuth() async {
+    final sp = context.read<SignInProvider>();
+    final ip = context.read<InternetProvider>();
+    await ip.checkInternetConnection();
+
+    if (ip.hasInternet == false) {
+      openSnackbar(context, "Check your Internet connection", Colors.red);
+      facebookController.reset();
+    } else {
+      await sp.signInWithFacebook().then((value) {
+        if (sp.hasError == true) {
+          openSnackbar(context, sp.errorCode.toString(), Colors.red);
+          facebookController.reset();
+        } else {
+          // checking whether user exists or not
+          sp.checkUserExists().then((value) async {
+            if (value == true) {
+              // user exists
+              await sp.getUserDataFromFirestore(sp.uid).then((value) => sp
+                  .saveDataToSharedPreferences()
+                  .then((value) => sp.setSignIn().then((value) {
+                        facebookController.success();
+                        handleAfterSignIn();
+                      })));
+            } else {
+              // user does not exist
+              sp.saveDataToFirestore().then((value) => sp
+                  .saveDataToSharedPreferences()
+                  .then((value) => sp.setSignIn().then((value) {
+                        facebookController.success();
+                        handleAfterSignIn();
+                      })));
+            }
+          });
+        }
+      });
+    }
+  }
+
+  // handle after signin
+  handleAfterSignIn() {
+    Future.delayed(const Duration(milliseconds: 1000)).then((value) {
+      nextScreenReplace(context, const ChatHome());
+    });
   }
 }
