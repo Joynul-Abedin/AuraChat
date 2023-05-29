@@ -1,8 +1,10 @@
+import 'package:chat_app/services/firebase_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_search_bar/easy_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/user_model.dart';
 import '../providers/sign_in_provider.dart';
 import '../utils/next_screen.dart';
 import '../widgets/favourite_contacts.dart';
@@ -47,11 +49,11 @@ class _ChatHomeState extends State<ChatHome> {
   @override
   Widget build(BuildContext context) {
     final sp = context.read<SignInProvider>();
+
     return Scaffold(
       appBar: EasySearchBar(
         backgroundColor: Theme.of(context).primaryColor,
-        title: const Text('Example'),
-        actions: [IconButton(icon: const Icon(Icons.person), onPressed: () {})],
+        title: const Text('AuraChat'),
         onSearch: (value) => setState(() => searchValue = value),
         asyncSuggestions: (value) async => await _fetchUserSuggestions(value),
       ),
@@ -98,11 +100,25 @@ class _ChatHomeState extends State<ChatHome> {
           ],
         ),
       ),
-      body: const Column(
-        children: [
-          FavouriteContacts(),
-          RecentChatList(),
-        ],
+      body: FutureBuilder<List<User>>(
+        future: FireBaseServices().fetchUserListFromFirebase(),
+        builder: (BuildContext context, AsyncSnapshot<List<User>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+                child: CircularProgressIndicator()
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            List<User> userList = snapshot.data!;
+            return Column(
+              children: [
+                FavouriteContacts(users: userList),
+                RecentChatList(users: userList),
+              ],
+            );
+          }
+        },
       ),
     );
   }

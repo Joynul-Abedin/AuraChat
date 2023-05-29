@@ -106,7 +106,7 @@ class SignInProvider extends ChangeNotifier {
             notifyListeners();
             break;
           default:
-            _errorCode = e.toString();
+            _errorCode = "Sign in or Sign Up canceled.";
             _hasError = true;
             notifyListeners();
         }
@@ -117,7 +117,7 @@ class SignInProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> signInWithGitHub() async {
+  /*Future signInWithGitHub() async {
     try {
       // Perform the GitHub sign-in flow
       final FirebaseAuth auth = FirebaseAuth.instance;
@@ -166,7 +166,34 @@ class SignInProvider extends ChangeNotifier {
       _hasError = true;
       notifyListeners();
     }
+  }*/
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> signInWithGitHub() async {
+    try {
+      final AuthCredential credential = GithubAuthProvider.credential(
+        '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',
+      );
+
+      final UserCredential userCredential =
+      await _auth.signInWithCredential(credential);
+      final User userDetails = userCredential.user!;
+
+      // now save all values
+      _name = userDetails.displayName;
+      _email = userDetails.email;
+      _imageUrl = userDetails.photoURL;
+      _provider = "GITHUB";
+      _uid = userDetails.uid;
+      notifyListeners();
+    } catch (e) {
+      // Handle the GitHub login error
+      print('GitHub login failed: $e');
+    }
   }
+
+
 
   // sign in with facebook
   Future signInWithFacebook() async {

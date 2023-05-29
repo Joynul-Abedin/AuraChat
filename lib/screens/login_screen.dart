@@ -55,14 +55,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(
                     height: 20,
                   ),
-                  const Text("Welcome to FlutterFirebase",
+                  const Text("Welcome to AuraChat",
                       style:
                           TextStyle(fontSize: 25, fontWeight: FontWeight.w500)),
                   const SizedBox(
                     height: 10,
                   ),
                   Text(
-                    "Learn Authentication with Provider",
+                    "Connect Beyond Words with AuraChat!",
                     style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                   )
                 ],

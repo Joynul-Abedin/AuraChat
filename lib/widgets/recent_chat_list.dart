@@ -1,100 +1,135 @@
-import 'package:chat_app/models/message_model.dart';
-import 'package:chat_app/screens/chat_screen.dart';
+
 import 'package:flutter/material.dart';
 
+import '../models/message_model.dart';
+import '../models/user_model.dart';
+import '../screens/chat_screen.dart';
+
 class RecentChatList extends StatefulWidget {
-  const RecentChatList({Key? key}) : super(key: key);
+  final List<User> users;
+
+  const RecentChatList({super.key, required this.users});
 
   @override
-  State<RecentChatList> createState() => _RecentChatListState();
+  RecentChatListState createState() => RecentChatListState();
 }
 
-class _RecentChatListState extends State<RecentChatList> {
+class RecentChatListState extends State<RecentChatList> {
+  late User currentUser;
+  late List<User> filteredUsers;
+
+  @override
+  void initState() {
+    super.initState();
+    currentUser = User(
+      id: 'currentUserId',
+      name: 'Current User',
+      imageUrl: 'https://example.com/images/current_user.jpg', friendId: '',
+    );
+    filteredUsers = filterUsersWithChats(currentUser);
+  }
+
+  List<User> filterUsersWithChats(User currentUser) {
+    // Filter users based on whether they have chat with the current user before
+    List<User> filteredList = [];
+
+    // for (User user in widget.users) {
+    //   if (user.id != currentUser.id) {
+    //     bool hasChat = messages.any((message) =>
+    //     (message.sender.id == currentUser.id && message.receiver.id == user.id) ||
+    //         (message.sender.id == user.id && message.receiver.id == currentUser.id));
+    //
+    //     if (hasChat) {
+    //       filteredList.add(user);
+    //     }
+    //   }
+    // }
+    return filteredList;
+  }
+
+  String getLastMessageWithUser(User user) {
+    // final List<Message> userMessages = messages.where((message) =>
+    // (message.sender.id == currentUser.id && message.receiver.id == user.id) ||
+    //     (message.sender.id == user.id && message.receiver.id == currentUser.id)).toList();
+    //
+    // if (userMessages.isNotEmpty) {
+    //   final Message lastMessage = userMessages.last;
+    //   return lastMessage.text;
+    // }
+
+    return 'No messages';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
         decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.0),
-                topRight: Radius.circular(20.0))),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
+          ),
+        ),
         child: ListView.builder(
-          itemCount: chats.length,
+          itemCount: widget.users.length,
           itemBuilder: (BuildContext context, int index) {
-            final chat = chats[index];
+            final User user = widget.users[index];
             return Padding(
               padding: const EdgeInsets.all(10.0),
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                ChatScreen(user: chat.sender)),
-                      );
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(user: user),
+                    ),
+                  );
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
                       children: [
-                        Row(
+                        CircleAvatar(
+                          radius: 25.0,
+                          backgroundImage: NetworkImage(user.imageUrl),
+                        ),
+                        const SizedBox(width: 10.0),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              children: [
-                                CircleAvatar(
-                                  radius: 25.0,
-                                  backgroundImage:
-                                      AssetImage(chat.sender.imageUrl),
-                                ),
-                              ],
+                            Text(
+                              user.name,
+                              style: const TextStyle(
+                                color: Colors.blueGrey,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14.0,
+                              ),
                             ),
-                            const SizedBox(
-                              width: 10.0,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  chat.sender.name,
-                                  style: const TextStyle(
-                                      color: Colors.blueGrey,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14.0),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * .5,
+                              child: Text(
+                                getLastMessageWithUser(user),
+                                style: const TextStyle(
+                                  color: Colors.blueGrey,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14.0,
                                 ),
-                                Container(
-                                  width: MediaQuery.of(context).size.width * .5,
-                                  child: Text(
-                                    chat.text,
-                                    style: const TextStyle(
-                                        color: Colors.blueGrey,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14.0),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
-                        Column(
-                          children: [
-                            Text(chat.time),
-                            chat.unread
-                                ? Container(
-                                    padding: EdgeInsets.all(2.0),
-                                    color: Colors.green,
-                                    child: const CircleAvatar(
-                                      radius: 2.0,
-                                      backgroundColor: Colors.green,
-                                    ))
-                                : Container(),
-                          ],
-                        )
                       ],
                     ),
-                  ),
-                ],
+                    Column(
+                      children: [
+                        Text('12:34 PM'),
+                        Container(),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           },
