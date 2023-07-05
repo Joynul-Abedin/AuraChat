@@ -25,10 +25,10 @@ class _LoginScreenState extends State<LoginScreen> {
               "AuraChat",
               style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
             ),
-            Padding(
-              padding: const EdgeInsets.all(10.0),
+            const Padding(
+              padding: EdgeInsets.all(10.0),
               child: Column(
-                children: const [
+                children: [
                   TextField(
                     decoration: InputDecoration(
                       hintText: 'Enter Email...',
@@ -46,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             ElevatedButton.icon(
               onPressed: () {
-                PreferencesManager.instance.setBool(Utils().IS_LOGGED_IN, true);
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) => ChatHome()));
               },

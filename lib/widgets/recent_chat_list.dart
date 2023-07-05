@@ -1,4 +1,6 @@
-
+import 'package:chat_app/services/shared_prefernce_service.dart';
+import 'package:chat_app/utils/utils.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../models/message_model.dart';
@@ -17,47 +19,89 @@ class RecentChatList extends StatefulWidget {
 class RecentChatListState extends State<RecentChatList> {
   late User currentUser;
   late List<User> filteredUsers;
+  final PreferencesManager preferencesManager = PreferencesManager();
 
   @override
   void initState() {
     super.initState();
     currentUser = User(
-      id: 'currentUserId',
-      name: 'Current User',
-      imageUrl: 'https://example.com/images/current_user.jpg', friendId: '',
+      id: preferencesManager.getID(Utils().ID),
+      name: preferencesManager.getName(Utils().NAME),
+      imageUrl: preferencesManager.getImage(Utils().IMAGE),
+      friendId: '',
+      fcmToken: '',
     );
-    filteredUsers = filterUsersWithChats(currentUser);
+    filteredUsers = filterOutCurrentUser(currentUser, widget.users);
   }
 
-  List<User> filterUsersWithChats(User currentUser) {
-    // Filter users based on whether they have chat with the current user before
+  List<User> filterUsersWithChats(User currentUser, List<User> allUsers) {
     List<User> filteredList = [];
 
-    // for (User user in widget.users) {
-    //   if (user.id != currentUser.id) {
-    //     bool hasChat = messages.any((message) =>
-    //     (message.sender.id == currentUser.id && message.receiver.id == user.id) ||
-    //         (message.sender.id == user.id && message.receiver.id == currentUser.id));
-    //
-    //     if (hasChat) {
-    //       filteredList.add(user);
-    //     }
-    //   }
-    // }
+    for (User user in allUsers) {
+      if (user.id != currentUser.id) {
+          filteredList.add(user);
+      }
+    }
     return filteredList;
   }
 
-  String getLastMessageWithUser(User user) {
-    // final List<Message> userMessages = messages.where((message) =>
-    // (message.sender.id == currentUser.id && message.receiver.id == user.id) ||
-    //     (message.sender.id == user.id && message.receiver.id == currentUser.id)).toList();
-    //
-    // if (userMessages.isNotEmpty) {
-    //   final Message lastMessage = userMessages.last;
-    //   return lastMessage.text;
-    // }
+  List<User> filterOutCurrentUser(User currentUser, List<User> allUsers) {
+    return allUsers.where((user) => user.id != currentUser.id).toList();
+  }
 
-    return 'No messages';
+
+
+  Future<Message> getLastMessageWithUser(User user) async {
+    // Query for messages from currentUser to user
+    final QuerySnapshot sentMessages = await FirebaseFirestore.instance
+        .collection('messages')
+        .where('sender', isEqualTo: currentUser.id)
+        .where('receiver', isEqualTo: user.id)
+        .orderBy('time', descending: true)
+        .limit(1)
+        .get();
+
+    // Query for messages from user to currentUser
+    final QuerySnapshot receivedMessages = await FirebaseFirestore.instance
+        .collection('messages')
+        .where('sender', isEqualTo: user.id)
+        .where('receiver', isEqualTo: currentUser.id)
+        .orderBy('time', descending: true)
+        .limit(1)
+        .get();
+
+    // If no messages exist in either direction, return a placeholder message
+    if (sentMessages.docs.isEmpty && receivedMessages.docs.isEmpty) {
+      return Message(
+        id: "0",
+        sender: currentUser,
+        receiver: user,
+        text: 'No messages',
+        time: DateTime.now().toString(),
+        isLiked: false,
+        unread: false,
+      );
+    }
+
+    // If no messages were sent by currentUser, return the latest received message
+    if (sentMessages.docs.isEmpty) {
+      return await Message.fromDocument(receivedMessages.docs.first);
+    }
+
+    // If no messages were received from user, return the latest sent message
+    if (receivedMessages.docs.isEmpty) {
+      return await Message.fromDocument(sentMessages.docs.first);
+    }
+
+    // If messages exist in both directions, compare their timestamps and return the latest one
+    final Message latestSentMessage =
+        await Message.fromDocument(sentMessages.docs.first);
+    final Message latestReceivedMessage =
+        await Message.fromDocument(receivedMessages.docs.first);
+
+    return latestSentMessage.time.compareTo(latestReceivedMessage.time) >= 0
+        ? latestSentMessage
+        : latestReceivedMessage;
   }
 
   @override
@@ -71,9 +115,9 @@ class RecentChatListState extends State<RecentChatList> {
           ),
         ),
         child: ListView.builder(
-          itemCount: widget.users.length,
+          itemCount: filteredUsers.length,
           itemBuilder: (BuildContext context, int index) {
-            final User user = widget.users[index];
+            final User user = filteredUsers[index];
             return Padding(
               padding: const EdgeInsets.all(10.0),
               child: GestureDetector(
@@ -108,14 +152,30 @@ class RecentChatListState extends State<RecentChatList> {
                             ),
                             SizedBox(
                               width: MediaQuery.of(context).size.width * .5,
-                              child: Text(
-                                getLastMessageWithUser(user),
-                                style: const TextStyle(
-                                  color: Colors.blueGrey,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14.0,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                              child: FutureBuilder<Message>(
+                                future: getLastMessageWithUser(user),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<Message> snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    // The future is still running and hasn't completed yet
+                                    return const LinearProgressIndicator();
+                                  } else if (snapshot.hasError) {
+                                    // An error occurred while running the future
+                                    return Text('Error: ${snapshot.error}');
+                                  } else {
+                                    // The future has completed with a result
+                                    return Text(
+                                      snapshot.data!.text,
+                                      style: const TextStyle(
+                                        color: Colors.blueGrey,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14.0,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    );
+                                  }
+                                },
                               ),
                             ),
                           ],
@@ -124,7 +184,7 @@ class RecentChatListState extends State<RecentChatList> {
                     ),
                     Column(
                       children: [
-                        Text('12:34 PM'),
+                        const Text('12:34 PM'),
                         Container(),
                       ],
                     ),

@@ -42,3 +42,34 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+**/android/.gradle
+**/android/app/build/
+**/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+**/android/gradle/wrapper/gradle-wrapper.properties
+
+
+# Visual Studio Code related
+.vscode/
+
+# Web related
+lib/generated_plugin_registrant.dart
+
+# iOS/Pod related
+**/ios/.symlinks/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Flutter.xcframework
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# Android related
+
+
+# Exception: Expose Gradle Wrapper script as it's expected to be part of the repo
+!**/android/gradle/wrapper/gradle-wrapper.jar
+

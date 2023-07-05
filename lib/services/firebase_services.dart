@@ -11,19 +11,21 @@ class FireBaseServices {
     return snapshot.docs;
   }
 
-
   Future<List<User>> fetchUserListFromFirebase() async {
     List<User> userList = [];
-
     try {
-      QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').get();
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection('users').get();
 
       for (QueryDocumentSnapshot documentSnapshot in querySnapshot.docs) {
-        Map<String, dynamic> userData = documentSnapshot.data() as Map<String, dynamic>;
+        Map<String, dynamic> userData =
+            documentSnapshot.data() as Map<String, dynamic>;
         User user = User(
           id: documentSnapshot.id,
           name: userData['name'] as String,
-          imageUrl: userData['image_url'] as String, friendId: '',
+          imageUrl: userData['image_url'] as String,
+          friendId: '',
+          fcmToken: userData['fcmToken'],
         );
         userList.add(user);
       }
@@ -31,12 +33,6 @@ class FireBaseServices {
       // Handle any errors that occur during fetching
       print('Error fetching user list: $error');
     }
-
     return userList;
   }
-
 }
-
-
-
-

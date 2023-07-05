@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image(
+                  const Image(
                     image: AssetImage(Config.app_icon),
                     height: 80,
                     width: 80,

@@ -1,19 +1,23 @@
 import 'dart:convert';
 
+import 'package:chat_app/utils/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+import '../services/shared_prefernce_service.dart';
 
 class SignInProvider extends ChangeNotifier {
   // instance of firebaseauth, facebook, google and github
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final FacebookAuth facebookAuth = FacebookAuth.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn();
+  final PreferencesManager sharedPreferences = PreferencesManager();
 
   bool _isSignedIn = false;
 
@@ -40,6 +44,10 @@ class SignInProvider extends ChangeNotifier {
 
   String? get name => _name;
 
+  String? _fcmToken;
+
+  String? get fcmToken => _fcmToken;
+
   String? _email;
 
   String? get email => _email;
@@ -54,13 +62,13 @@ class SignInProvider extends ChangeNotifier {
 
   Future checkSignInUser() async {
     final SharedPreferences s = await SharedPreferences.getInstance();
-    _isSignedIn = s.getBool("signed_in") ?? false;
+    _isSignedIn = s.getBool(Utils().IS_LOGGED_IN) ?? false;
     notifyListeners();
   }
 
   Future setSignIn() async {
     final SharedPreferences s = await SharedPreferences.getInstance();
-    s.setBool("signed_in", true);
+    s.setBool(Utils().IS_LOGGED_IN, true);
     _isSignedIn = true;
     notifyListeners();
   }
@@ -90,6 +98,19 @@ class SignInProvider extends ChangeNotifier {
         _imageUrl = userDetails.photoURL;
         _provider = "GOOGLE";
         _uid = userDetails.uid;
+
+        // Retrieving the FCM token
+        String? fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) {
+          _fcmToken = fcmToken;
+        } else {
+          _fcmToken = "";
+        }
+
+        sharedPreferences.setID(Utils().ID, _uid!);
+        sharedPreferences.setName(Utils().NAME, _name!);
+        sharedPreferences.setImage(Utils().IMAGE, _imageUrl!);
+        sharedPreferences.setIsLoggedIn(Utils().IS_LOGGED_IN, true);
         notifyListeners();
       } on FirebaseAuthException catch (e) {
         switch (e.code) {
@@ -116,57 +137,6 @@ class SignInProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  /*Future signInWithGitHub() async {
-    try {
-      // Perform the GitHub sign-in flow
-      final FirebaseAuth auth = FirebaseAuth.instance;
-      final OAuthProvider provider = OAuthProvider('github.com');
-      final UserCredential userCredential =
-      await auth.signInWithPopup(provider);
-
-      // Get the user details
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        // Save the user details
-        _name = user.displayName;
-        _email = user.email;
-        _imageUrl = user.photoURL;
-        _provider = "GITHUB";
-        _uid = user.uid;
-        notifyListeners();
-      }
-    } on FirebaseAuthException catch (e) {
-      switch (e.code) {
-        case "account-exists-with-different-credential":
-          _errorCode =
-          "You already have an account with us. Use correct provider";
-          _hasError = true;
-          break;
-        case "null":
-          _errorCode = "Some unexpected error occurred while trying to sign in";
-          _hasError = true;
-          break;
-        default:
-          _errorCode = e.toString();
-          _hasError = true;
-      }
-      notifyListeners();
-    } on PlatformException catch (e) {
-      // Handle any platform-specific errors
-      print('PlatformException during GitHub sign-in: ${e.message}');
-      _errorCode = e.message;
-      _hasError = true;
-      notifyListeners();
-    } catch (e) {
-      // Handle other exceptions
-      print('Exception during GitHub sign-in: $e');
-      _errorCode = 'An unexpected error occurred';
-      _hasError = true;
-      notifyListeners();
-    }
-  }*/
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -252,13 +222,16 @@ class SignInProvider extends ChangeNotifier {
         .get()
         .then((DocumentSnapshot snapshot) =>
     {
+      print(snapshot.data()),  // print out the snapshot data
       _uid = snapshot['uid'],
       _name = snapshot['name'],
       _email = snapshot['email'],
       _imageUrl = snapshot['image_url'],
       _provider = snapshot['provider'],
+      _provider = snapshot['fcmToken'],
     });
   }
+
 
   Future saveDataToFirestore() async {
     final DocumentReference r =
@@ -269,26 +242,27 @@ class SignInProvider extends ChangeNotifier {
       "uid": _uid,
       "image_url": _imageUrl,
       "provider": _provider,
+      "fcmToken": _fcmToken,
     });
     notifyListeners();
   }
 
   Future saveDataToSharedPreferences() async {
     final SharedPreferences s = await SharedPreferences.getInstance();
-    await s.setString('name', _name!);
+    await s.setString(Utils().NAME, _name!);
     await s.setString('email', _email!);
-    await s.setString('uid', _uid!);
-    await s.setString('image_url', _imageUrl!);
+    await s.setString(Utils().ID, _uid!);
+    await s.setString(Utils().IMAGE, _imageUrl!);
     await s.setString('provider', _provider!);
     notifyListeners();
   }
 
   Future getDataFromSharedPreferences() async {
     final SharedPreferences s = await SharedPreferences.getInstance();
-    _name = s.getString('name');
+    _name = s.getString(Utils().NAME);
     _email = s.getString('email');
-    _imageUrl = s.getString('image_url');
-    _uid = s.getString('uid');
+    _imageUrl = s.getString(Utils().IMAGE);
+    _uid = s.getString(Utils().ID);
     _provider = s.getString('provider');
     notifyListeners();
   }
@@ -310,7 +284,7 @@ class SignInProvider extends ChangeNotifier {
   Future userSignOut() async {
     firebaseAuth.signOut;
     await googleSignIn.signOut();
-
+    sharedPreferences.clearAll();
     _isSignedIn = false;
     notifyListeners();
     // clear all storage information

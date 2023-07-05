@@ -1,6 +1,9 @@
 import 'package:chat_app/services/firebase_services.dart';
+import 'package:chat_app/services/shared_prefernce_service.dart';
+import 'package:chat_app/utils/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_search_bar/easy_search_bar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,7 +15,7 @@ import '../widgets/recent_chat_list.dart';
 import 'login_screen.dart';
 
 class ChatHome extends StatefulWidget {
-  ChatHome({Key? key}) : super(key: key);
+  const ChatHome({Key? key}) : super(key: key);
 
   @override
   State<ChatHome> createState() => _ChatHomeState();
@@ -20,6 +23,8 @@ class ChatHome extends StatefulWidget {
 
 class _ChatHomeState extends State<ChatHome> {
   String searchValue = '';
+
+  PreferencesManager preferencesManager = PreferencesManager();
 
   Future<List<String>> _fetchUserSuggestions(String searchValue) async {
     final QuerySnapshot snapshot = await FirebaseFirestore.instance
@@ -32,7 +37,7 @@ class _ChatHomeState extends State<ChatHome> {
     final List<String> suggestions = [];
 
     for (final doc in snapshot.docs) {
-      final Map<String, dynamic> userData = doc.data() as Map<String, dynamic>;
+      final Map<User, dynamic> userData = doc.data() as Map<User, dynamic>;
       final String displayName = userData['name'] as String;
       suggestions.add(displayName);
     }
@@ -42,7 +47,9 @@ class _ChatHomeState extends State<ChatHome> {
 
   void onSearchResult(String selectedUser) {
     // Perform actions when a user is selected
-    print('Selected User: $selectedUser');
+    if (kDebugMode) {
+      print('Selected User: $selectedUser');
+    }
     // You can navigate to a different screen or perform any other logic here
   }
 
@@ -63,40 +70,46 @@ class _ChatHomeState extends State<ChatHome> {
           children: [
             DrawerHeader(
               decoration: const BoxDecoration(
-                color: Colors.blue,
+                color: Colors.amberAccent,
               ),
               child: Column(
                 children: [
                   CircleAvatar(
-                    radius: 50.0,
-                    backgroundImage: NetworkImage(sp.imageUrl ??
-                        'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'),
+                    radius: 44.0,
+                    backgroundImage: NetworkImage(
+                        preferencesManager.getImage(Utils().IMAGE)),
                   ),
-                  Text.rich(
-                    TextSpan(
-                      text: sp.name ?? "Mohammad Joynul Abedin",
-                      style: const TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: <Widget>[
+                      Text(
+                        preferencesManager.getName(Utils().NAME),
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ),
+                      const SizedBox(
+                        width: 20.0,
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            sp.userSignOut();
+                            nextScreenReplace(context, const LoginScreen());
+                          },
+                          icon: const Icon(
+                            Icons.logout,
+                          ) ,
+                      ),
+                    ],
+                  )
                 ],
               ),
             ),
             ListTile(
               title: const Text('Item 1'),
               onTap: () => Navigator.pop(context),
-            ),
-            ElevatedButton(
-                onPressed: () {
-                  sp.userSignOut();
-                  nextScreenReplace(context, const LoginScreen());
-                },
-                child: const Text("SIGNOUT",
-                    style: TextStyle(
-                      color: Colors.white,
-                    )))
+            )
           ],
         ),
       ),
@@ -104,9 +117,7 @@ class _ChatHomeState extends State<ChatHome> {
         future: FireBaseServices().fetchUserListFromFirebase(),
         builder: (BuildContext context, AsyncSnapshot<List<User>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-                child: CircularProgressIndicator()
-            );
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else {

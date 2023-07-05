@@ -4,10 +4,38 @@ import 'package:flutter/material.dart';
 
 import '../screens/chat_screen.dart';
 import '../services/firebase_services.dart';
+import '../services/shared_prefernce_service.dart';
+import '../utils/utils.dart';
 
-class FavouriteContacts extends StatelessWidget {
+class FavouriteContacts extends StatefulWidget {
   final List<User> users;
   const FavouriteContacts({Key? key, required this.users}) : super(key: key);
+
+  @override
+  State<FavouriteContacts> createState() => _FavouriteContactsState();
+}
+
+class _FavouriteContactsState extends State<FavouriteContacts> {
+  late User currentUser;
+  late List<User> filteredUsers;
+  final PreferencesManager preferencesManager = PreferencesManager();
+
+  @override
+  void initState() {
+    super.initState();
+    currentUser = User(
+      id: preferencesManager.getID(Utils().ID),
+      name: preferencesManager.getName(Utils().NAME),
+      imageUrl: preferencesManager.getImage(Utils().IMAGE),
+      friendId: '',
+      fcmToken: '',
+    );
+    filteredUsers = filterOutCurrentUser(currentUser, widget.users);
+  }
+
+  List<User> filterOutCurrentUser(User currentUser, List<User> allUsers) {
+    return allUsers.where((user) => user.id != currentUser.id).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +44,7 @@ class FavouriteContacts extends StatelessWidget {
       color: Theme.of(context).hintColor,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: users.length,
+        itemCount: filteredUsers.length,
         itemBuilder: (BuildContext context, int index) {
           return Padding(
             padding: const EdgeInsets.all(8.0),
@@ -28,19 +56,19 @@ class FavouriteContacts extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              ChatScreen(user: users[index])),
+                              ChatScreen(user: filteredUsers[index])),
                     );
                   },
                   child: CircleAvatar(
                     radius: 35.0,
-                    backgroundImage: NetworkImage(users[index].imageUrl),
+                    backgroundImage: NetworkImage(filteredUsers[index].imageUrl),
                   ),
                 ),
                 const SizedBox(
                   height: 6.0,
                 ),
                 Text(
-                  users[index].name.split(" ").first,
+                  filteredUsers[index].name.split(" ").first,
                   style: const TextStyle(
                       fontSize: 14.0,
                       fontWeight: FontWeight.bold,

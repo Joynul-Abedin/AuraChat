@@ -1,87 +1,120 @@
+import 'dart:async';
+
+import 'package:chat_app/services/shared_prefernce_service.dart';
+import 'package:chat_app/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/message_model.dart';
 import '../models/user_model.dart';
 import '../providers/sign_in_provider.dart';
 import '../services/socket_io_services.dart';
-
+import '../services/web_rtc_logics.dart';
 
 class ChatScreen extends StatefulWidget {
   final User user;
 
-  ChatScreen({required this.user});
+  const ChatScreen({super.key, required this.user});
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  ChatScreenState createState() => ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   late User currentUser;
   late List<Message> messages;
   final CallService _callService = CallService();
+  late final webRTCLogic;
+  late final videoRenderer;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _messagesSubscription;
 
+  final PreferencesManager preferencesManager = PreferencesManager();
 
   @override
   void initState() {
     CallService();
     final sp = context.read<SignInProvider>();
     super.initState();
+    webRTCLogic = WebRTCLogic();
+    videoRenderer = RTCVideoRenderer();
+    videoRenderer.initialize();
 
     currentUser = User(
-      id: sp.uid ?? "",
-      name: sp.name ?? "AuraChat",
-      imageUrl: sp.imageUrl ?? "https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png", friendId: '',
+      id: preferencesManager.getID(Utils().ID),
+      name: preferencesManager.getName(Utils().NAME),
+      imageUrl: preferencesManager.getImage(Utils().IMAGE),
+      friendId: '',
+      fcmToken: '',
     );
     messages = [];
     fetchMessages();
   }
 
-  Future<void> fetchMessages() async {
-    final QuerySnapshot snapshot = await FirebaseFirestore.instance
+  void updateMessageLiked(Message message, bool isLiked) async {
+    await FirebaseFirestore.instance
         .collection('messages')
-        .where('participants', arrayContains: [currentUser.id , widget.user.id])
-        .orderBy('time')
-        .get();
+        .doc(message.id) // use the Firestore document ID
+        .update({'isLiked': isLiked});
+  }
 
-    final List<Message> fetchedMessages = [];
 
-    for (final doc in snapshot.docs) {
-      final Map<String, dynamic> messageData = doc.data() as Map<String, dynamic>;
-      final String text = messageData['text'] as String;
-      final String time = messageData['time'] as String;
-      final bool isLiked = messageData['isLiked'] as bool;
-      final String senderId = messageData['senderId'] as String;
-      final String receiverId = messageData['receiverId'] as String;
+  void fetchMessages() {
+    _messagesSubscription = FirebaseFirestore.instance
+        .collection('messages')
+        .where('participants', arrayContains: widget.user.id)
+        .orderBy('time', descending: true)
+        .snapshots()
+        .listen((snapshot) async {
+      final List<Message> fetchedMessages = [];
 
-      final User sender = User(
-        id: senderId,
-        name: 'Sender', // Replace with appropriate field from Firestore
-        imageUrl: 'sender_image_url', friendId: '', // Replace with appropriate field from Firestore
-      );
+      for (final doc in snapshot.docs) {
+        final Map<String, dynamic> messageData = doc.data();
+        final String text = messageData['text'] as String;
+        final String time = messageData['time'] as String;
+        final bool isLiked = messageData['isLiked'] as bool;
+        final String senderId = messageData['senderId'] as String;
+        final String receiverId = messageData['receiverId'] as String;
 
-      final User receiver = User(
-        id: receiverId,
-        name: 'Receiver', // Replace with appropriate field from Firestore
-        imageUrl: 'receiver_image_url', friendId: '', // Replace with appropriate field from Firestore
-      );
+        final senderUser = await User.fromId(senderId);
+        final receiverUser = await User.fromId(receiverId);
 
-      final Message message = Message(
-        sender: sender,
-        receiver: receiver,
-        text: text,
-        time: time,
-        isLiked: isLiked,
-        unread: true,
-      );
+        final User sender = User(
+          id: senderId,
+          name: senderUser.name, // Replace with appropriate field from Firestore
+          imageUrl: senderUser.imageUrl, // Replace with appropriate field from Firestore
+          friendId: '',
+          fcmToken: senderUser.fcmToken,
+        );
 
-      fetchedMessages.add(message);
-    }
+        final User receiver = User(
+          id: receiverId,
+          name: receiverUser.name,
+          imageUrl: receiverUser.imageUrl,
+          friendId: '',
+          fcmToken: receiverUser.fcmToken,
+        );
 
-    setState(() {
-      messages = fetchedMessages;
+        final Message message = Message(
+          id: doc.id,
+          sender: sender,
+          receiver: receiver,
+          text: text,
+          time: time,
+          isLiked: isLiked,
+          unread: true,
+        );
+
+        fetchedMessages.add(message);
+      }
+
+      setState(() {
+        messages = fetchedMessages;
+      });
     });
   }
 
@@ -90,6 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
 
     final Message newMessage = Message(
+      id: "",
       sender: currentUser,
       receiver: widget.user,
       text: text,
@@ -98,8 +132,11 @@ class _ChatScreenState extends State<ChatScreen> {
       unread: true,
     );
 
+
+    final newMessageInstance = FirebaseFirestore.instance.collection('messages').id;
     // Store the message in Cloud Firestore
     await FirebaseFirestore.instance.collection('messages').add({
+      'id': newMessageInstance,
       'text': newMessage.text,
       'time': newMessage.time,
       'isLiked': newMessage.isLiked,
@@ -113,6 +150,14 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     _messageController.clear();
+  }
+
+  void startVideoCall() async {
+    RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
+    await remoteRenderer.initialize();
+
+    webRTCLogic.createRoom(remoteRenderer);
+    webRTCLogic.joinRoom(widget.user.id, remoteRenderer);
   }
 
   @override
@@ -142,7 +187,7 @@ class _ChatScreenState extends State<ChatScreen> {
             iconSize: 30.0,
             color: Colors.white,
             onPressed: () {
-              _callService.startCall(widget.user.id);
+              startVideoCall();
             },
           ),
           IconButton(
@@ -159,24 +204,23 @@ class _ChatScreenState extends State<ChatScreen> {
           children: <Widget>[
             Expanded(
               child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30.0),
-                    topRight: Radius.circular(30.0),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30.0),
+                      topRight: Radius.circular(30.0),
+                    ),
                   ),
-                ),
-                child: ListView.builder(
-                  reverse: true,
-                  padding: const EdgeInsets.only(top: 15.0),
-                  itemCount: messages.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final Message message = messages[index];
-                    final bool isMe = message.sender.id == currentUser.id;
-                    return _buildMessage(message, isMe);
-                  },
-                ),
-              ),
+                  child: ListView.builder(
+                    reverse: true,
+                    padding: const EdgeInsets.only(top: 15.0),
+                    itemCount: messages.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final Message message = messages[index];
+                      final bool isMe = message.sender.id == currentUser.id;
+                      return _buildMessage(message, isMe);
+                    },
+                  )),
             ),
             _buildMessageComposer(),
           ],
@@ -223,29 +267,29 @@ class _ChatScreenState extends State<ChatScreen> {
       margin: isMe
           ? const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 80.0)
           : const EdgeInsets.only(
-        top: 8.0,
-        bottom: 8.0,
-      ),
+              top: 8.0,
+              bottom: 8.0,
+            ),
       padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 15.0),
       width: MediaQuery.of(context).size.width * 0.75,
       decoration: BoxDecoration(
         color: isMe ? Theme.of(context).hintColor : const Color(0xFFFFEFEE),
         borderRadius: isMe
             ? const BorderRadius.only(
-          topLeft: Radius.circular(15.0),
-          bottomLeft: Radius.circular(15.0),
-        )
+                topLeft: Radius.circular(15.0),
+                bottomLeft: Radius.circular(15.0),
+              )
             : const BorderRadius.only(
-          topRight: Radius.circular(15.0),
-          bottomRight: Radius.circular(15.0),
-        ),
+                topRight: Radius.circular(15.0),
+                bottomRight: Radius.circular(15.0),
+              ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Wrap(children: [
             Text(
-              message.time,
+              DateFormat('h:mm a').format(DateTime.parse(message.time)),
               style: const TextStyle(
                 color: Colors.blueGrey,
                 fontSize: 16.0,
@@ -279,10 +323,14 @@ class _ChatScreenState extends State<ChatScreen> {
           color: message.isLiked
               ? Theme.of(context).primaryColor
               : Colors.blueGrey,
-          onPressed: () {},
+          onPressed: () {
+            setState(() {
+              message.isLiked = !message.isLiked; // update the local state
+            });
+            updateMessageLiked(message, message.isLiked); // update Firestore
+          },
         )
       ],
     );
   }
 }
-
